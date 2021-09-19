@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FlaskBlog</title>
+    <link rel="stylesheet" href="../static/styles/styles.css">
+<!--    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.0/css/bootstrap.min.css"-->
+<!--          integrity="sha256-/ykJw/wDxMa0AQhHDYfuMEwVb4JHMx9h4jD4XvHqVzU=" crossorigin="anonymous"/>-->
+</head>
+<body>
+
+<form class="center" action="/search" method="get">
+    <label style="color: white" for="curr_url">Current URL: </label><br>
+    <input style="width:800px" type="text" id="curr_url" name="curr_url" value="{{ctx.url}}"><br>
+    <button type="submit">GO GO BRRRR</button>
+</form>
+
+<div class="center">
+    <a href="/search?curr_url={{ctx.prev}}" class="btn" name="prev"><button>PREV</button></a>
+    <a href="/search?curr_url={{ctx.next}}" class="btn" name="next"><button>NEXT</button></a>
+</div>
+
+
+
+<div class="img-zone">
+
+    {% for img in ctx.imgs %}
+
+    <img class="img-content center" src="{{img}}">
+
+    {% endfor %}
+
+</div>
+
+<div class="center">
+    <a href="/search?curr_url={{ctx.prev}}" class="btn" name="prev"><button>PREV</button></a>
+    <a href="/search?curr_url={{ctx.next}}" class="btn" name="next"><button>NEXT</button></a>
+</div>
+
+</body>
+</html>
