@@ -1,40 +1,490 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>FlaskBlog</title>
-    <link rel="stylesheet" href="../static/styles/styles.css">
-<!--    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.0/css/bootstrap.min.css"-->
-<!--          integrity="sha256-/ykJw/wDxMa0AQhHDYfuMEwVb4JHMx9h4jD4XvHqVzU=" crossorigin="anonymous"/>-->
+    <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/166/166088.png">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <title>Flask Reading</title>
+    <style>
+        img {
+            margin-top: 5px;
+        }
+
+        .navbar {
+            margin-top: 15px;
+            /*margin-bottom: 15px;*/
+            display: none;
+            /*background: #292b2c;*/
+        }
+
+        .add-padding-top {
+            height: 600px;
+        }
+
+        a, a:hover, a:active, a:visited {
+            color: aliceblue;
+        }
+
+        a[disabled] {
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+
+        /* Style the header: fixed position (always stay at the top) */
+        .header {
+            /*position: fixed;*/
+            top: 0;
+            z-index: 1;
+            /*width: 100%;*/
+            margin: auto;
+            height: 8px;
+            display: flex;
+            justify-content: center;
+        }
+
+        #pg-id {
+            color: black;
+            height: 100%;
+        }
+
+        /* The progress container (grey background) */
+        .progress-container {
+            width: 100%;
+            height: 100%;
+            background: #292b2c;
+        }
+
+        /* The progress bar (scroll indicator) */
+        .progress-bar {
+            height: 100%;
+            background: darkgray;
+            /*background: gray-600;*/
+            width: 0%;
+            /*color: black;*/
+            /*text-align: right;*/
+            /*font-size: 8px;*/
+        }
+    </style>
+    <script>
+        function go_go() {
+            curr_url = document.getElementById("curr_url").value;
+            location.href = "/search?curr_url=".concat(curr_url);
+        }
+
+        function zoomin() {
+            var imgs = document.getElementsByClassName("img-size");
+            for (let i = 0; i < imgs.length; i++) {
+                var currWidth = imgs[i].clientWidth;
+                // console.log(currWidth)
+                imgs[i].style.width = (currWidth + 50) + "px";
+                // console.log(imgs[i].style.width)
+            }
+        }
+
+        function zoomout() {
+            var imgs = document.getElementsByClassName("img-size");
+            for (let i = 0; i < imgs.length; i++) {
+                var currWidth = imgs[i].clientWidth;
+                // console.log(currWidth)
+                imgs[i].style.width = (currWidth - 50) + "px";
+                // console.log(imgs[i].style.width)
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            window.addEventListener('scroll', function () {
+                if (window.scrollY > 100) {
+                    var nav_bar = document.getElementById('navbar_top');
+                    nav_bar.style.display = 'block'
+                    nav_bar.classList.add('fixed-bottom');
+
+                    // add padding top to show content behind navbar
+                    // var navbar_height = document.querySelector('.navbar').offsetHeight;
+                    // document.body.style.paddingTop = navbar_height + 'px';
+                } else {
+                    var nav_bar = document.getElementById('navbar_top');
+                    nav_bar.style.display = 'none';
+                    nav_bar.classList.remove('fixed-bottom');
+
+                    // remove padding top from body
+                    // document.body.style.paddingTop = '0';
+                }
+
+                try {
+                    var img_size = document.getElementsByTagName("img")[0].clientWidth;
+                    var header_size = document.getElementsByClassName("header")[0];
+                    header_size.style.width = img_size + 'px';
+                } catch (e) {
+                }
+
+                var winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+                var height = document.documentElement.scrollHeight - document.documentElement.clientHeight - 600;
+                var scrolled = (winScroll / height) * 100;
+                if (scrolled > 100) scrolled = 100;
+                document.getElementById("myBar").style.width = scrolled + "%";
+                // document.getElementById("myBar").innerHTML = Math.round(scrolled) + " %    .";
+            });
+        });
+
+        function topFunction() {
+            document.body.scrollTop = 0; // For Safari
+            document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
+        }
+
+    </script>
 </head>
-<body>
+<body class="bg-dark">
 
-<form class="center" action="/search" method="get">
-    <label style="color: white" for="curr_url">Current URL: </label><br>
-    <input style="width:800px" type="text" id="curr_url" name="curr_url" value="{{ctx.url}}"><br>
-    <button type="submit">GO GO BRRRR</button>
-</form>
-
-<div class="center">
-    <a href="/search?curr_url={{ctx.prev}}" class="btn" name="prev"><button>PREV</button></a>
-    <a href="/search?curr_url={{ctx.next}}" class="btn" name="next"><button>NEXT</button></a>
+<div class="header fixed-top">
+    <div class="progress-container">
+        <div class="progress-bar" id="myBar"></div>
+    </div>
 </div>
 
+<div class="container">
 
+    <nav class="navbar" id="navbar_top">
+        <div class="container-fluid">
 
-<div class="img-zone">
+            {% if not ctx.prev == '' %}
+            <a href="/search?curr_url={{ctx.prev}}" class="btn btn-secondary" name="prev"
+               title="{{ctx.prev}}" onclick="this.blur()">
+                <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
+                     width="30" height="30"
+                     viewBox="0 0 172 172"
+                     style=" fill:#000000;">
+                    <g fill="none" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt"
+                       stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0"
+                       font-family="none" font-weight="none" font-size="none" text-anchor="none"
+                       style="mix-blend-mode: normal">
+                        <path d="M0,172v-172h172v172z" fill="none"></path>
+                        <g fill="#ffffff">
+                            <path d="M91.62136,22.87734c-1.48951,0.04438 -2.90324,0.6669 -3.94167,1.73568l-57.33333,57.33333c-2.23811,2.23904 -2.23811,5.86825 0,8.10729l57.33333,57.33333c1.43802,1.49778 3.5734,2.10113 5.5826,1.57735c2.0092,-0.52378 3.57826,-2.09284 4.10204,-4.10204c0.52378,-2.0092 -0.07957,-4.14458 -1.57735,-5.5826l-53.27969,-53.27969l53.27969,-53.27969c1.69569,-1.64828 2.20555,-4.16851 1.28389,-6.3463c-0.92166,-2.17779 -3.08576,-3.56638 -5.44951,-3.49667zM131.75469,22.87734c-1.48951,0.04438 -2.90324,0.6669 -3.94167,1.73568l-57.33333,57.33333c-2.23811,2.23904 -2.23811,5.86825 0,8.10729l57.33333,57.33333c1.43802,1.49778 3.5734,2.10113 5.5826,1.57735c2.0092,-0.52378 3.57826,-2.09284 4.10204,-4.10204c0.52378,-2.0092 -0.07957,-4.14458 -1.57735,-5.5826l-53.27969,-53.27969l53.27969,-53.27969c1.69569,-1.64828 2.20555,-4.16851 1.28389,-6.3463c-0.92166,-2.17779 -3.08576,-3.56638 -5.44951,-3.49667z"></path>
+                        </g>
+                    </g>
+                </svg>
+            </a>
+            {% else %}
+            <a href="/search?curr_url={{ctx.prev}}" class="btn btn-secondary" name="prev"
+               title="{{ctx.prev}}" onclick="this.blur()" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
+                     width="30" height="30"
+                     viewBox="0 0 172 172"
+                     style=" fill:#000000;">
+                    <g fill="none" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt"
+                       stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0"
+                       font-family="none" font-weight="none" font-size="none" text-anchor="none"
+                       style="mix-blend-mode: normal">
+                        <path d="M0,172v-172h172v172z" fill="none"></path>
+                        <g fill="#ffffff">
+                            <path d="M91.62136,22.87734c-1.48951,0.04438 -2.90324,0.6669 -3.94167,1.73568l-57.33333,57.33333c-2.23811,2.23904 -2.23811,5.86825 0,8.10729l57.33333,57.33333c1.43802,1.49778 3.5734,2.10113 5.5826,1.57735c2.0092,-0.52378 3.57826,-2.09284 4.10204,-4.10204c0.52378,-2.0092 -0.07957,-4.14458 -1.57735,-5.5826l-53.27969,-53.27969l53.27969,-53.27969c1.69569,-1.64828 2.20555,-4.16851 1.28389,-6.3463c-0.92166,-2.17779 -3.08576,-3.56638 -5.44951,-3.49667zM131.75469,22.87734c-1.48951,0.04438 -2.90324,0.6669 -3.94167,1.73568l-57.33333,57.33333c-2.23811,2.23904 -2.23811,5.86825 0,8.10729l57.33333,57.33333c1.43802,1.49778 3.5734,2.10113 5.5826,1.57735c2.0092,-0.52378 3.57826,-2.09284 4.10204,-4.10204c0.52378,-2.0092 -0.07957,-4.14458 -1.57735,-5.5826l-53.27969,-53.27969l53.27969,-53.27969c1.69569,-1.64828 2.20555,-4.16851 1.28389,-6.3463c-0.92166,-2.17779 -3.08576,-3.56638 -5.44951,-3.49667z"></path>
+                        </g>
+                    </g>
+                </svg>
+            </a>
+            {% endif %}
+            <button type="button" class="btn btn-secondary" onclick="zoomin(); this.blur()">
+                <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
+                     width="30" height="30"
+                     viewBox="0 0 172 172"
+                     style=" fill:#000000;">
+                    <g fill="none" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt"
+                       stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0"
+                       font-family="none" font-weight="none" font-size="none" text-anchor="none"
+                       style="mix-blend-mode: normal">
+                        <path d="M0,172v-172h172v172z" fill="none"></path>
+                        <g fill="#ffffff">
+                            <path d="M74.53333,17.2c-31.59642,0 -57.33333,25.73692 -57.33333,57.33333c0,31.59642 25.73692,57.33333 57.33333,57.33333c13.73998,0 26.35834,-4.87915 36.24766,-12.97839l34.23203,34.23203c1.43802,1.49778 3.5734,2.10113 5.5826,1.57735c2.0092,-0.52378 3.57826,-2.09284 4.10204,-4.10204c0.52378,-2.0092 -0.07957,-4.14458 -1.57735,-5.5826l-34.23203,-34.23203c8.09924,-9.88932 12.97839,-22.50768 12.97839,-36.24766c0,-31.59642 -25.73692,-57.33333 -57.33333,-57.33333zM74.53333,28.66667c25.39937,0 45.86667,20.4673 45.86667,45.86667c0,25.39937 -20.46729,45.86667 -45.86667,45.86667c-25.39937,0 -45.86667,-20.46729 -45.86667,-45.86667c0,-25.39937 20.4673,-45.86667 45.86667,-45.86667zM74.44375,45.78828c-3.16203,0.04943 -5.68705,2.6496 -5.64375,5.81172v17.2h-17.2c-2.06765,-0.02924 -3.99087,1.05709 -5.03322,2.843c-1.04236,1.78592 -1.04236,3.99474 0,5.78066c1.04236,1.78592 2.96558,2.87225 5.03322,2.843h17.2v17.2c-0.02924,2.06765 1.05709,3.99087 2.843,5.03322c1.78592,1.04236 3.99474,1.04236 5.78066,0c1.78592,-1.04236 2.87225,-2.96558 2.843,-5.03322v-17.2h17.2c2.06765,0.02924 3.99087,-1.05709 5.03322,-2.843c1.04236,-1.78592 1.04236,-3.99474 0,-5.78066c-1.04236,-1.78592 -2.96558,-2.87225 -5.03322,-2.843h-17.2v-17.2c0.02122,-1.54972 -0.58581,-3.04203 -1.68279,-4.1369c-1.09698,-1.09487 -2.59045,-1.69903 -4.14013,-1.67482z"></path>
+                        </g>
+                    </g>
+                </svg>
+            </button>
+
+            <button onclick="topFunction(); this.blur()" id="toTopBtn" title="Go to top" class="btn btn-secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
+                     width="30" height="30"
+                     viewBox="0 0 172 172"
+                     style=" fill:#000000;">
+                    <g fill="none" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt"
+                       stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0"
+                       font-family="none" font-weight="none" font-size="none" text-anchor="none"
+                       style="mix-blend-mode: normal">
+                        <path d="M0,172v-172h172v172z" fill="none"></path>
+                        <g fill="#ffffff">
+                            <path d="M85.91042,28.66667c-1.48937,0.02375 -2.91104,0.62615 -3.96406,1.67969l-57.33333,57.33333c-1.49776,1.43802 -2.1011,3.57339 -1.57731,5.58258c0.52378,2.00919 2.09283,3.57824 4.10202,4.10202c2.00919,0.52378 4.14456,-0.07955 5.58258,-1.57732l53.27969,-53.27969l53.27969,53.27969c1.43802,1.49778 3.5734,2.10113 5.5826,1.57735c2.0092,-0.52378 3.57826,-2.09284 4.10204,-4.10204c0.52378,-2.0092 -0.07957,-4.14458 -1.57735,-5.5826l-57.33333,-57.33333c-1.09692,-1.09743 -2.59177,-1.70345 -4.14323,-1.67969zM85.91042,68.8c-1.48937,0.02375 -2.91104,0.62615 -3.96406,1.67969l-57.33333,57.33333c-1.49776,1.43802 -2.1011,3.57339 -1.57731,5.58258c0.52378,2.00919 2.09283,3.57824 4.10202,4.10202c2.00919,0.52378 4.14456,-0.07955 5.58258,-1.57732l53.27969,-53.27969l53.27969,53.27969c1.43802,1.49778 3.5734,2.10113 5.5826,1.57735c2.0092,-0.52378 3.57826,-2.09284 4.10204,-4.10204c0.52378,-2.0092 -0.07957,-4.14458 -1.57735,-5.5826l-57.33333,-57.33333c-1.09692,-1.09743 -2.59177,-1.70345 -4.14323,-1.67969z"></path>
+                        </g>
+                    </g>
+                </svg>
+            </button>
+
+            <button type="button" class="btn btn-secondary zoom-button d-block" onclick="zoomout(); this.blur()">
+                <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
+                     width="30" height="30"
+                     viewBox="0 0 172 172"
+                     style=" fill:#000000;">
+                    <g fill="none" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt"
+                       stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0"
+                       font-family="none" font-weight="none" font-size="none" text-anchor="none"
+                       style="mix-blend-mode: normal">
+                        <path d="M0,172v-172h172v172z" fill="none"></path>
+                        <g fill="#ffffff">
+                            <path d="M74.53333,17.2c-31.59642,0 -57.33333,25.73692 -57.33333,57.33333c0,31.59642 25.73692,57.33333 57.33333,57.33333c13.73998,0 26.35834,-4.87915 36.24766,-12.97839l34.23203,34.23203c1.43802,1.49778 3.5734,2.10113 5.5826,1.57735c2.0092,-0.52378 3.57826,-2.09284 4.10204,-4.10204c0.52378,-2.0092 -0.07957,-4.14458 -1.57735,-5.5826l-34.23203,-34.23203c8.09924,-9.88932 12.97839,-22.50768 12.97839,-36.24766c0,-31.59642 -25.73692,-57.33333 -57.33333,-57.33333zM74.53333,28.66667c25.39937,0 45.86667,20.4673 45.86667,45.86667c0,25.39937 -20.46729,45.86667 -45.86667,45.86667c-25.39937,0 -45.86667,-20.46729 -45.86667,-45.86667c0,-25.39937 20.4673,-45.86667 45.86667,-45.86667zM51.6,68.8c-2.06765,-0.02924 -3.99087,1.05709 -5.03322,2.843c-1.04236,1.78592 -1.04236,3.99474 0,5.78066c1.04236,1.78592 2.96558,2.87225 5.03322,2.843h45.86667c2.06765,0.02924 3.99087,-1.05709 5.03322,-2.843c1.04236,-1.78592 1.04236,-3.99474 0,-5.78066c-1.04236,-1.78592 -2.96558,-2.87225 -5.03322,-2.843z"></path>
+                        </g>
+                    </g>
+                </svg>
+            </button>
+
+            {% if not ctx.next == '' %}
+            <a href="/search?curr_url={{ctx.next}}" class="btn btn-secondary d-block" name="next"
+               title="{{ctx.next}}" onclick="this.blur()">
+                <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
+                     width="30" height="30"
+                     viewBox="0 0 172 172"
+                     style=" fill:#000000;">
+                    <g fill="none" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt"
+                       stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0"
+                       font-family="none" font-weight="none" font-size="none" text-anchor="none"
+                       style="mix-blend-mode: normal">
+                        <path d="M0,172v-172h172v172z" fill="none"></path>
+                        <g fill="#ffffff">
+                            <path d="M40.07734,22.87734c-2.33303,0.00061 -4.43307,1.41473 -5.31096,3.57628c-0.8779,2.16155 -0.3586,4.6395 1.31331,6.26669l53.27969,53.27969l-53.27969,53.27969c-1.49776,1.43802 -2.1011,3.57339 -1.57731,5.58258c0.52378,2.00919 2.09283,3.57824 4.10202,4.10202c2.00919,0.52378 4.14456,-0.07955 5.58258,-1.57732l57.33333,-57.33333c2.23811,-2.23904 2.23811,-5.86825 0,-8.10729l-57.33333,-57.33333c-1.07942,-1.10959 -2.56163,-1.73559 -4.10963,-1.73568zM80.21067,22.87734c-2.33303,0.00061 -4.43306,1.41473 -5.31096,3.57628c-0.8779,2.16155 -0.3586,4.6395 1.31331,6.26668l53.27969,53.27969l-53.27969,53.27969c-1.49778,1.43802 -2.10113,3.5734 -1.57735,5.5826c0.52378,2.0092 2.09284,3.57826 4.10204,4.10204c2.0092,0.52378 4.14458,-0.07957 5.5826,-1.57735l57.33333,-57.33333c2.23811,-2.23904 2.23811,-5.86825 0,-8.10729l-57.33333,-57.33333c-1.07942,-1.10959 -2.56163,-1.73559 -4.10964,-1.73568z"></path>
+                        </g>
+                    </g>
+                </svg>
+            </a>
+            {% else %}
+            <a href="/search?curr_url={{ctx.next}}" class="btn btn-secondary d-block" name="next"
+               title="{{ctx.next}}" onclick="this.blur()" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
+                     width="30" height="30"
+                     viewBox="0 0 172 172"
+                     style=" fill:#000000;">
+                    <g fill="none" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt"
+                       stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0"
+                       font-family="none" font-weight="none" font-size="none" text-anchor="none"
+                       style="mix-blend-mode: normal">
+                        <path d="M0,172v-172h172v172z" fill="none"></path>
+                        <g fill="#ffffff">
+                            <path d="M40.07734,22.87734c-2.33303,0.00061 -4.43307,1.41473 -5.31096,3.57628c-0.8779,2.16155 -0.3586,4.6395 1.31331,6.26669l53.27969,53.27969l-53.27969,53.27969c-1.49776,1.43802 -2.1011,3.57339 -1.57731,5.58258c0.52378,2.00919 2.09283,3.57824 4.10202,4.10202c2.00919,0.52378 4.14456,-0.07955 5.58258,-1.57732l57.33333,-57.33333c2.23811,-2.23904 2.23811,-5.86825 0,-8.10729l-57.33333,-57.33333c-1.07942,-1.10959 -2.56163,-1.73559 -4.10963,-1.73568zM80.21067,22.87734c-2.33303,0.00061 -4.43306,1.41473 -5.31096,3.57628c-0.8779,2.16155 -0.3586,4.6395 1.31331,6.26668l53.27969,53.27969l-53.27969,53.27969c-1.49778,1.43802 -2.10113,3.5734 -1.57735,5.5826c0.52378,2.0092 2.09284,3.57826 4.10204,4.10204c2.0092,0.52378 4.14458,-0.07957 5.5826,-1.57735l57.33333,-57.33333c2.23811,-2.23904 2.23811,-5.86825 0,-8.10729l-57.33333,-57.33333c-1.07942,-1.10959 -2.56163,-1.73559 -4.10964,-1.73568z"></path>
+                        </g>
+                    </g>
+                </svg>
+            </a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="row mt-5">
+        <div class="col-md-5 mx-auto">
+            <div class="small fw-light" style="color:aliceblue">
+                Curent chap is:
+                {{ ctx.url.split("/")[-1] }}
+            </div>
+            <div class="small fw-light" style="color:aliceblue">Chapter's url:</div>
+            <div class="input-group">
+                <input class="form-control border" type="search" placeholder="Chapter's url"
+                       id="curr_url" value="{{ctx.url}}">
+                <button type="button" class="btn btn-secondary" onclick="go_go(); this.blur()">Go Go Brr!</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="">
+            <br>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="mx-auto text-center">
+            {% if not ctx.prev == '' %}
+            <a href="/search?curr_url={{ctx.prev}}" class="btn btn-secondary" name="prev"
+               title="{{ctx.prev}}" onclick="this.blur()">
+                <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
+                     width="30" height="30"
+                     viewBox="0 0 172 172"
+                     style=" fill:#000000;">
+                    <g fill="none" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt"
+                       stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0"
+                       font-family="none" font-weight="none" font-size="none" text-anchor="none"
+                       style="mix-blend-mode: normal">
+                        <path d="M0,172v-172h172v172z" fill="none"></path>
+                        <g fill="#ffffff">
+                            <path d="M91.62136,22.87734c-1.48951,0.04438 -2.90324,0.6669 -3.94167,1.73568l-57.33333,57.33333c-2.23811,2.23904 -2.23811,5.86825 0,8.10729l57.33333,57.33333c1.43802,1.49778 3.5734,2.10113 5.5826,1.57735c2.0092,-0.52378 3.57826,-2.09284 4.10204,-4.10204c0.52378,-2.0092 -0.07957,-4.14458 -1.57735,-5.5826l-53.27969,-53.27969l53.27969,-53.27969c1.69569,-1.64828 2.20555,-4.16851 1.28389,-6.3463c-0.92166,-2.17779 -3.08576,-3.56638 -5.44951,-3.49667zM131.75469,22.87734c-1.48951,0.04438 -2.90324,0.6669 -3.94167,1.73568l-57.33333,57.33333c-2.23811,2.23904 -2.23811,5.86825 0,8.10729l57.33333,57.33333c1.43802,1.49778 3.5734,2.10113 5.5826,1.57735c2.0092,-0.52378 3.57826,-2.09284 4.10204,-4.10204c0.52378,-2.0092 -0.07957,-4.14458 -1.57735,-5.5826l-53.27969,-53.27969l53.27969,-53.27969c1.69569,-1.64828 2.20555,-4.16851 1.28389,-6.3463c-0.92166,-2.17779 -3.08576,-3.56638 -5.44951,-3.49667z"></path>
+                        </g>
+                    </g>
+                </svg>
+            </a>
+            {% else %}
+            <a href="/search?curr_url={{ctx.prev}}" class="btn btn-secondary" name="prev"
+               title="{{ctx.prev}}" onclick="this.blur()" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
+                     width="30" height="30"
+                     viewBox="0 0 172 172"
+                     style=" fill:#000000;">
+                    <g fill="none" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt"
+                       stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0"
+                       font-family="none" font-weight="none" font-size="none" text-anchor="none"
+                       style="mix-blend-mode: normal">
+                        <path d="M0,172v-172h172v172z" fill="none"></path>
+                        <g fill="#ffffff">
+                            <path d="M91.62136,22.87734c-1.48951,0.04438 -2.90324,0.6669 -3.94167,1.73568l-57.33333,57.33333c-2.23811,2.23904 -2.23811,5.86825 0,8.10729l57.33333,57.33333c1.43802,1.49778 3.5734,2.10113 5.5826,1.57735c2.0092,-0.52378 3.57826,-2.09284 4.10204,-4.10204c0.52378,-2.0092 -0.07957,-4.14458 -1.57735,-5.5826l-53.27969,-53.27969l53.27969,-53.27969c1.69569,-1.64828 2.20555,-4.16851 1.28389,-6.3463c-0.92166,-2.17779 -3.08576,-3.56638 -5.44951,-3.49667zM131.75469,22.87734c-1.48951,0.04438 -2.90324,0.6669 -3.94167,1.73568l-57.33333,57.33333c-2.23811,2.23904 -2.23811,5.86825 0,8.10729l57.33333,57.33333c1.43802,1.49778 3.5734,2.10113 5.5826,1.57735c2.0092,-0.52378 3.57826,-2.09284 4.10204,-4.10204c0.52378,-2.0092 -0.07957,-4.14458 -1.57735,-5.5826l-53.27969,-53.27969l53.27969,-53.27969c1.69569,-1.64828 2.20555,-4.16851 1.28389,-6.3463c-0.92166,-2.17779 -3.08576,-3.56638 -5.44951,-3.49667z"></path>
+                        </g>
+                    </g>
+                </svg>
+            </a>
+            {% endif %}
+            {% if not ctx.next == '' %}
+            <a href="/search?curr_url={{ctx.next}}" class="btn btn-secondary" name="next"
+               title="{{ctx.next}}" onclick="this.blur()">
+                <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
+                     width="30" height="30"
+                     viewBox="0 0 172 172"
+                     style=" fill:#000000;">
+                    <g fill="none" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt"
+                       stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0"
+                       font-family="none" font-weight="none" font-size="none" text-anchor="none"
+                       style="mix-blend-mode: normal">
+                        <path d="M0,172v-172h172v172z" fill="none"></path>
+                        <g fill="#ffffff">
+                            <path d="M40.07734,22.87734c-2.33303,0.00061 -4.43307,1.41473 -5.31096,3.57628c-0.8779,2.16155 -0.3586,4.6395 1.31331,6.26669l53.27969,53.27969l-53.27969,53.27969c-1.49776,1.43802 -2.1011,3.57339 -1.57731,5.58258c0.52378,2.00919 2.09283,3.57824 4.10202,4.10202c2.00919,0.52378 4.14456,-0.07955 5.58258,-1.57732l57.33333,-57.33333c2.23811,-2.23904 2.23811,-5.86825 0,-8.10729l-57.33333,-57.33333c-1.07942,-1.10959 -2.56163,-1.73559 -4.10963,-1.73568zM80.21067,22.87734c-2.33303,0.00061 -4.43306,1.41473 -5.31096,3.57628c-0.8779,2.16155 -0.3586,4.6395 1.31331,6.26668l53.27969,53.27969l-53.27969,53.27969c-1.49778,1.43802 -2.10113,3.5734 -1.57735,5.5826c0.52378,2.0092 2.09284,3.57826 4.10204,4.10204c2.0092,0.52378 4.14458,-0.07957 5.5826,-1.57735l57.33333,-57.33333c2.23811,-2.23904 2.23811,-5.86825 0,-8.10729l-57.33333,-57.33333c-1.07942,-1.10959 -2.56163,-1.73559 -4.10964,-1.73568z"></path>
+                        </g>
+                    </g>
+                </svg>
+            </a>
+            {% else %}
+            <a href="/search?curr_url={{ctx.next}}" class="btn btn-secondary" name="next"
+               title="{{ctx.next}}" onclick="this.blur()" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
+                     width="30" height="30"
+                     viewBox="0 0 172 172"
+                     style=" fill:#000000;">
+                    <g fill="none" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt"
+                       stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0"
+                       font-family="none" font-weight="none" font-size="none" text-anchor="none"
+                       style="mix-blend-mode: normal">
+                        <path d="M0,172v-172h172v172z" fill="none"></path>
+                        <g fill="#ffffff">
+                            <path d="M40.07734,22.87734c-2.33303,0.00061 -4.43307,1.41473 -5.31096,3.57628c-0.8779,2.16155 -0.3586,4.6395 1.31331,6.26669l53.27969,53.27969l-53.27969,53.27969c-1.49776,1.43802 -2.1011,3.57339 -1.57731,5.58258c0.52378,2.00919 2.09283,3.57824 4.10202,4.10202c2.00919,0.52378 4.14456,-0.07955 5.58258,-1.57732l57.33333,-57.33333c2.23811,-2.23904 2.23811,-5.86825 0,-8.10729l-57.33333,-57.33333c-1.07942,-1.10959 -2.56163,-1.73559 -4.10963,-1.73568zM80.21067,22.87734c-2.33303,0.00061 -4.43306,1.41473 -5.31096,3.57628c-0.8779,2.16155 -0.3586,4.6395 1.31331,6.26668l53.27969,53.27969l-53.27969,53.27969c-1.49778,1.43802 -2.10113,3.5734 -1.57735,5.5826c0.52378,2.0092 2.09284,3.57826 4.10204,4.10204c2.0092,0.52378 4.14458,-0.07957 5.5826,-1.57735l57.33333,-57.33333c2.23811,-2.23904 2.23811,-5.86825 0,-8.10729l-57.33333,-57.33333c-1.07942,-1.10959 -2.56163,-1.73559 -4.10964,-1.73568z"></path>
+                        </g>
+                    </g>
+                </svg>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="">
+            <br>
+        </div>
+    </div>
 
     {% for img in ctx.imgs %}
+    <div class="row">
+        <div class="text-center">
+            <img class="text-center img-fluid img-size" src="{{img}}">
+        </div>
 
-    <img class="img-content center" src="{{img}}">
-
+    </div>
     {% endfor %}
 
-</div>
+    <div class="row">
+        <div class="">
+            <br>
+        </div>
+    </div>
 
-<div class="center">
-    <a href="/search?curr_url={{ctx.prev}}" class="btn" name="prev"><button>PREV</button></a>
-    <a href="/search?curr_url={{ctx.next}}" class="btn" name="next"><button>NEXT</button></a>
+    <div class="row">
+        <div class="mx-auto text-center">
+            {% if not ctx.prev == '' %}
+            <a href="/search?curr_url={{ctx.prev}}" class="btn btn-secondary" name="prev"
+               title="{{ctx.prev}}" onclick="this.blur()">
+                <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
+                     width="30" height="30"
+                     viewBox="0 0 172 172"
+                     style=" fill:#000000;">
+                    <g fill="none" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt"
+                       stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0"
+                       font-family="none" font-weight="none" font-size="none" text-anchor="none"
+                       style="mix-blend-mode: normal">
+                        <path d="M0,172v-172h172v172z" fill="none"></path>
+                        <g fill="#ffffff">
+                            <path d="M91.62136,22.87734c-1.48951,0.04438 -2.90324,0.6669 -3.94167,1.73568l-57.33333,57.33333c-2.23811,2.23904 -2.23811,5.86825 0,8.10729l57.33333,57.33333c1.43802,1.49778 3.5734,2.10113 5.5826,1.57735c2.0092,-0.52378 3.57826,-2.09284 4.10204,-4.10204c0.52378,-2.0092 -0.07957,-4.14458 -1.57735,-5.5826l-53.27969,-53.27969l53.27969,-53.27969c1.69569,-1.64828 2.20555,-4.16851 1.28389,-6.3463c-0.92166,-2.17779 -3.08576,-3.56638 -5.44951,-3.49667zM131.75469,22.87734c-1.48951,0.04438 -2.90324,0.6669 -3.94167,1.73568l-57.33333,57.33333c-2.23811,2.23904 -2.23811,5.86825 0,8.10729l57.33333,57.33333c1.43802,1.49778 3.5734,2.10113 5.5826,1.57735c2.0092,-0.52378 3.57826,-2.09284 4.10204,-4.10204c0.52378,-2.0092 -0.07957,-4.14458 -1.57735,-5.5826l-53.27969,-53.27969l53.27969,-53.27969c1.69569,-1.64828 2.20555,-4.16851 1.28389,-6.3463c-0.92166,-2.17779 -3.08576,-3.56638 -5.44951,-3.49667z"></path>
+                        </g>
+                    </g>
+                </svg>
+            </a>
+            {% else %}
+            <a href="/search?curr_url={{ctx.prev}}" class="btn btn-secondary" name="prev"
+               title="{{ctx.prev}}" onclick="this.blur()" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
+                     width="30" height="30"
+                     viewBox="0 0 172 172"
+                     style=" fill:#000000;">
+                    <g fill="none" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt"
+                       stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0"
+                       font-family="none" font-weight="none" font-size="none" text-anchor="none"
+                       style="mix-blend-mode: normal">
+                        <path d="M0,172v-172h172v172z" fill="none"></path>
+                        <g fill="#ffffff">
+                            <path d="M91.62136,22.87734c-1.48951,0.04438 -2.90324,0.6669 -3.94167,1.73568l-57.33333,57.33333c-2.23811,2.23904 -2.23811,5.86825 0,8.10729l57.33333,57.33333c1.43802,1.49778 3.5734,2.10113 5.5826,1.57735c2.0092,-0.52378 3.57826,-2.09284 4.10204,-4.10204c0.52378,-2.0092 -0.07957,-4.14458 -1.57735,-5.5826l-53.27969,-53.27969l53.27969,-53.27969c1.69569,-1.64828 2.20555,-4.16851 1.28389,-6.3463c-0.92166,-2.17779 -3.08576,-3.56638 -5.44951,-3.49667zM131.75469,22.87734c-1.48951,0.04438 -2.90324,0.6669 -3.94167,1.73568l-57.33333,57.33333c-2.23811,2.23904 -2.23811,5.86825 0,8.10729l57.33333,57.33333c1.43802,1.49778 3.5734,2.10113 5.5826,1.57735c2.0092,-0.52378 3.57826,-2.09284 4.10204,-4.10204c0.52378,-2.0092 -0.07957,-4.14458 -1.57735,-5.5826l-53.27969,-53.27969l53.27969,-53.27969c1.69569,-1.64828 2.20555,-4.16851 1.28389,-6.3463c-0.92166,-2.17779 -3.08576,-3.56638 -5.44951,-3.49667z"></path>
+                        </g>
+                    </g>
+                </svg>
+            </a>
+            {% endif %}
+            {% if not ctx.next == '' %}
+            <a href="/search?curr_url={{ctx.next}}" class="btn btn-secondary" name="next"
+               title="{{ctx.next}}" onclick="this.blur()">
+                <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
+                     width="30" height="30"
+                     viewBox="0 0 172 172"
+                     style=" fill:#000000;">
+                    <g fill="none" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt"
+                       stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0"
+                       font-family="none" font-weight="none" font-size="none" text-anchor="none"
+                       style="mix-blend-mode: normal">
+                        <path d="M0,172v-172h172v172z" fill="none"></path>
+                        <g fill="#ffffff">
+                            <path d="M40.07734,22.87734c-2.33303,0.00061 -4.43307,1.41473 -5.31096,3.57628c-0.8779,2.16155 -0.3586,4.6395 1.31331,6.26669l53.27969,53.27969l-53.27969,53.27969c-1.49776,1.43802 -2.1011,3.57339 -1.57731,5.58258c0.52378,2.00919 2.09283,3.57824 4.10202,4.10202c2.00919,0.52378 4.14456,-0.07955 5.58258,-1.57732l57.33333,-57.33333c2.23811,-2.23904 2.23811,-5.86825 0,-8.10729l-57.33333,-57.33333c-1.07942,-1.10959 -2.56163,-1.73559 -4.10963,-1.73568zM80.21067,22.87734c-2.33303,0.00061 -4.43306,1.41473 -5.31096,3.57628c-0.8779,2.16155 -0.3586,4.6395 1.31331,6.26668l53.27969,53.27969l-53.27969,53.27969c-1.49778,1.43802 -2.10113,3.5734 -1.57735,5.5826c0.52378,2.0092 2.09284,3.57826 4.10204,4.10204c2.0092,0.52378 4.14458,-0.07957 5.5826,-1.57735l57.33333,-57.33333c2.23811,-2.23904 2.23811,-5.86825 0,-8.10729l-57.33333,-57.33333c-1.07942,-1.10959 -2.56163,-1.73559 -4.10964,-1.73568z"></path>
+                        </g>
+                    </g>
+                </svg>
+            </a>
+            {% else %}
+            <a href="/search?curr_url={{ctx.next}}" class="btn btn-secondary" name="next"
+               title="{{ctx.next}}" onclick="this.blur()" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
+                     width="30" height="30"
+                     viewBox="0 0 172 172"
+                     style=" fill:#000000;">
+                    <g fill="none" fill-rule="nonzero" stroke="none" stroke-width="1" stroke-linecap="butt"
+                       stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0"
+                       font-family="none" font-weight="none" font-size="none" text-anchor="none"
+                       style="mix-blend-mode: normal">
+                        <path d="M0,172v-172h172v172z" fill="none"></path>
+                        <g fill="#ffffff">
+                            <path d="M40.07734,22.87734c-2.33303,0.00061 -4.43307,1.41473 -5.31096,3.57628c-0.8779,2.16155 -0.3586,4.6395 1.31331,6.26669l53.27969,53.27969l-53.27969,53.27969c-1.49776,1.43802 -2.1011,3.57339 -1.57731,5.58258c0.52378,2.00919 2.09283,3.57824 4.10202,4.10202c2.00919,0.52378 4.14456,-0.07955 5.58258,-1.57732l57.33333,-57.33333c2.23811,-2.23904 2.23811,-5.86825 0,-8.10729l-57.33333,-57.33333c-1.07942,-1.10959 -2.56163,-1.73559 -4.10963,-1.73568zM80.21067,22.87734c-2.33303,0.00061 -4.43306,1.41473 -5.31096,3.57628c-0.8779,2.16155 -0.3586,4.6395 1.31331,6.26668l53.27969,53.27969l-53.27969,53.27969c-1.49778,1.43802 -2.10113,3.5734 -1.57735,5.5826c0.52378,2.0092 2.09284,3.57826 4.10204,4.10204c2.0092,0.52378 4.14458,-0.07957 5.5826,-1.57735l57.33333,-57.33333c2.23811,-2.23904 2.23811,-5.86825 0,-8.10729l-57.33333,-57.33333c-1.07942,-1.10959 -2.56163,-1.73559 -4.10964,-1.73568z"></path>
+                        </g>
+                    </g>
+                </svg>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row mt-5 add-padding-top">
+        <div class="col-md-5 mx-auto text-center">
+            <div class="small fw-light" style="color:aliceblue">Using more free icons, just visit <a
+                    href="https://icons8.com">https://icons8.com</a></div>
+            <div class="small fw-light" style="color:aliceblue">This site use Bootstrap 5.0.2 and Jquery 3.5.1</div>
+        </div>
+    </div>
+
 </div>
 
 </body>
