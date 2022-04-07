@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/166/166088.png">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <title>Flask Reading</title>
+    <style>
+        img {
+            margin-top: 5px;
+        }
+
+        .navbar {
+            margin-top: 15px;
+            /*margin-bottom: 15px;*/
+            display: none;
+            /*background: #292b2c;*/
+        }
+
+        .add-padding-top {
+            height: 600px;
+        }
+
+        a, a:hover, a:active, a:visited {
+            color: aliceblue;
+        }
+
+        a[disabled] {
+            pointer-events: none;
+            opacity: 0.0;
+        }
+
+        .btn {
+            opacity: 0.7;
+        }
+
+
+        /* Style the header: fixed position (always stay at the top) */
+        .header {
+            /*position: fixed;*/
+            top: 0;
+            z-index: 1;
+            /*width: 100%;*/
+            margin: auto;
+            height: 8px;
+            display: flex;
+            justify-content: center;
+        }
+
+        #pg-id {
+            color: black;
+            height: 100%;
+        }
+
+        /* The progress container (grey background) */
+        .progress-container {
+            width: 100%;
+            height: 100%;
+            background: #292b2c;
+        }
+
+        /* The progress bar (scroll indicator) */
+        .progress-bar {
+            height: 100%;
+            background: darkgray;
+            /*background: gray-600;*/
+            width: 0%;
+            /*color: black;*/
+            /*text-align: right;*/
+            /*font-size: 8px;*/
+        }
+    </style>
+    <script>
+
+        function go_cheat() {
+            var not_in = document.getElementById("not_include_chars").value;
+            var include_chars = document.getElementById("include_chars").value;
+            var knew_plot = document.getElementById("knew_plot").value;
+            location.href = "/cheat/wordzzle?not_in=".concat(not_in).concat("&in=").concat(include_chars).concat("&knewpot=").concat(knew_plot);
+        }
+
+
+    </script>
+</head>
+<body class="bg-dark">
+
+    <div class="small fw-light" style="color:aliceblue">
+        Character(s) not included in word:
+    </div>
+
+    <div class="input-group">
+        <input class="border" type="search" placeholder=""
+               id="not_include_chars" value="{{ ctx.not_in }}">
+    </div>
+    <br>
+
+    <div class="small fw-light" style="color:aliceblue">
+        Character(s) included in word:
+    </div>
+
+    <div class="input-group">
+        <input class="border" type="search" placeholder=""
+               id="include_chars" value="{{ ctx.include_chars }}">
+    </div>
+    <br>
+
+    <div class="small fw-light" style="color:aliceblue">
+        Knew plot(s) (eg: 1a 2w -3A,... -3A mean there is no A at 3rd plot):
+    </div>
+
+    <div class="input-group">
+        <input class="border" type="search" placeholder=""
+               id="knew_plot" value="{{ ctx.knew_plot }}">
+    </div>
+    <br>
+    <button type="button" class="btn btn-secondary" onclick="go_cheat() ;this.blur()">Go Brr!</button>
+
+    <br>
+    <br>
+    <div class="small fw-light" style="color:aliceblue">
+        Total word(s): {{ ctx.result|length }}
+    </div>
+
+    <table style="color:white">
+        <col width="100">
+        <col width="100">
+        <tr>
+            <th>Words</th>
+            <th>Meaning</th>
+        </tr>
+
+    {% for word, mean in ctx.result.items() %}
+        <tr>
+            <td>{{ word }}</td>
+            <td>{{ mean }}</td>
+        </tr>
+    {% endfor %}
+
+    </table>
+
+
+
+    <div class="row mt-5 add-padding-top">
+        <div class="col-md-5 mx-auto text-center">
+            <div class="small fw-light" style="color:aliceblue">Using more free icons, just visit <a
+                    href="https://icons8.com">https://icons8.com</a></div>
+            <div class="small fw-light" style="color:aliceblue">This site use Bootstrap 5.0.2 and Jquery 3.5.1</div>
+        </div>
+    </div>
+
+
+
+
+</body>
+</html>
